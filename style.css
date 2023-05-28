@@ -1,0 +1,41 @@
+html {color-scheme: light dark;}
+body {
+    font-family: system-ui;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    image-rendering: pixelated;
+}
+button {
+    cursor: pointer;
+    margin: 5px;
+}
+#loading {animation: loadcolor 1s ease-in infinite;}
+@keyframes loadcolor {
+    0% {color: rgb(72, 255, 72);}
+    50% {color: rgb(10, 209, 10);}
+    100% {color: rgb(72, 255, 72);}
+}
+.info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.info div {padding: 10px;}
+#skin img, #cape img {
+    animation: dlBorder 2s linear infinite;
+    background-color: rgba(0, 0, 0, 0.393);
+    object-fit: contain;
+    cursor: pointer;
+}
+#skin img {width: 150px;}
+#cape img {height: 90px;}
+@keyframes dlBorder {
+    0% {border: 2px solid white;}
+    50% {border: 2px solid rgb(146, 146, 146);}
+    100% {border: 2px solid white;}
+}
+@media only screen and (max-width: 600px) {
+    body {line-height: 2rem;}
+}
