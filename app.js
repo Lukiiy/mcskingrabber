@@ -1,9 +1,12 @@
+let getskin_lock = false;
 const loadingDiv = document.getElementById("loading");
 const capeDiv = document.getElementById("cape");
 const skinDiv = document.getElementById("skin");
 const button = document.getElementById("button");
 
 async function getSkin() {
+    if (getskin_lock === true) {return;}
+    getskin_lock = true;
     const username = document.getElementById("username").value.trim();
 
     if (username === "") {
@@ -39,6 +42,7 @@ async function getSkin() {
         toggleState("button");
         alert(error.message);
     }
+    getskin_lock = false;
 }
 
 async function loadImage(url, alt, div) {
