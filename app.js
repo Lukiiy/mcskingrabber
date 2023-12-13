@@ -1,94 +1,64 @@
-let getskin_lock = false;
-const loadingDiv = document.getElementById("loading");
-const capeDiv = document.getElementById("cape");
-const skinDiv = document.getElementById("skin");
-const button = document.getElementById("button");
+const capeImg = document.getElementById('cape');
+const skinImg = document.getElementById('skin');
+var button = document.querySelector('#btn');
 
-async function getSkin() {
-    if (getskin_lock === true) {return;}
-    getskin_lock = true;
-    const username = document.getElementById("username").value.trim();
+async function getSkin(username) {
+  if (button.disabled) return;
+  btnState(false);
 
-    if (username === "") {
-        alert("Please enter a username.");
-        return;
+  if (username === "" || username == null) {
+    alert("Please, insert a username!");
+    btnState(true);
+    return;
+  }
+  if (!(/^\w{3,16}$/).test(username)) {
+    alert("Please, insert a valid username!");
+    btnState(true);
+    return;
+  }
+
+  skinImg.style.display = 'none';
+  capeImg.style.display = 'none';
+  skinImg.src = "";
+  capeImg.src = "";
+
+  try {
+    const response = await fetch(`https://api.ashcon.app/mojang/v2/user/${username}`);
+    if (!response.ok) throw new Error("Error while getting the player's data.");
+
+    const data = await response.json();
+    if (!data.textures) throw new Error("Error while getting player data.");
+
+    skinImg.src = `data:image/png;base64,${data.textures.skin.data}`;
+    skinImg.style.display = 'block';
+    if (data.textures.cape.data != null) {
+      capeImg.src = `data:image/png;base64,${data.textures.cape.data}`;
+      capeImg.style.display = 'block';
     }
-
-    capeDiv.innerHTML = "";
-    skinDiv.innerHTML = "";
-
-    toggleState("loading");
-
-    try {
-        const response = await fetch(`https://api.ashcon.app/mojang/v2/user/${username}`);
-        if (!response.ok) {throw new Error("Failed to retrieve player data!");}
-
-        const data = await response.json();
-
-        if (!data.textures || !data.textures.skin) {
-            throw new Error("Failed to retrieve skin data!");
-        }
-
-        const skinUrl = data.textures.skin.url?.replace(/^http:\/\//i, "https://");
-        const capeUrl = data.textures.cape?.url?.replace(/^http:\/\//i, "https://");
-
-        await loadImage(skinUrl, "Skin", skinDiv);
-        if (capeUrl) {
-            await loadImage(capeUrl, "Cape", capeDiv);
-        }
-
-        toggleState("button");
-    } catch (error) {
-        toggleState("button");
-        alert(error.message);
-    }
-    getskin_lock = false;
+  } catch (error) {console.error(error.message);}
+  btnState(true);
 }
 
-async function loadImage(url, alt, div) {
-    if (url) {
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = alt;
-        await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-        });
-        div.appendChild(img);
-    }
+function btnState(state) {
+  if (state === false) {
+    button.textContent = 'Loading...';
+    button.disabled = true;
+    return;
+  }
+  button.disabled = false;
+  button.textContent = 'Get Skin';
+};
+
+function dl(type) {
+  var a = document.createElement("a");
+  if (type === "Skin") a.href = skinImg.src;
+  if (type === "Cape") a.href = capeImg.src;
+  a.download = `${type}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
-function toggleState(state) {
-    const loadingDiv = document.getElementById("loading");
-    const button = document.getElementById("button");
-    loadingDiv.style.display = state === "loading" ? "block" : "none";
-    button.style.display = state === "button" ? "flex" : "none";
-}
-
-function dlContent(type) {
-    const imgContainer = type === "skin" ? document.querySelector("#skin") : document.querySelector("#cape");
-    const img = imgContainer.querySelector("img");
-    if (!img) {
-        alert("No image found!");
-        return;
-    }
-    fetch(img.src)
-        .then(response => response.blob())
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = type === "skin" ? "skin.png" : "cape.png";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        })
-        .catch(() => alert(`Error downloading ${type}!`));
-}
-
-document.addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        const username = document.getElementById("username").value.trim();
-        if (username !== "") {getSkin();}
-    }
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") getSkin(document.getElementById('username').value.trim());
 });
