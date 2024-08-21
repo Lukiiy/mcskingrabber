@@ -5,21 +5,22 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
-  <script defer src="app.js"></script>
   <meta name="description" content="Minecraft Skin Grabber">
   <meta name="author" content="Lukiiy">
   <title>Minecraft Skin Grabber</title>
+  <script defer src="app.js"></script>
 </head>
-<body>
+<body class="flex">
   <h1>Skin Grabber</h1>
   <div>
     <label for="username">Player:</label>
-    <input type="text" id="username" name="player">
+    <input type="text" id="username" name="player" placeholder="jeb_">
+    <button id="btn" onclick="execute(usernameInput.value.trim())">Get Skin</button>
   </div>
-  <button onclick="getSkin(document.getElementById('username').value.trim());" id="btn">Get Skin</button>
-  <section id="data">
-    <img id="skin" onclick="dl('Skin')" alt="Skin"></img>
-    <img id="cape" onclick="dl('Cape')" alt="Cape"></img>
+  <section id="data" class="flex">
+    <img id="skin" alt="Skin"></img>
+    <img id="cape" alt="Cape"></img>
   </section>
+  <p><a href="https://github.com/Lukiiy/mcskingrabber">Source Code</a></p>
 </body>
 </html>

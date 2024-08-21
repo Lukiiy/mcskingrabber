@@ -1,64 +1,82 @@
 const capeImg = document.getElementById('cape');
 const skinImg = document.getElementById('skin');
-var button = document.querySelector('#btn');
+const button = document.getElementById('btn');
+const usernameInput = document.getElementById('username');
+const dataBox = document.getElementById('data');
 
-async function getSkin(username) {
+function isValidUsernameOrUUID(input) {
+  const usernameRegex = /^\w{3,16}$/;
+  const UUIDRegex = /^[0-9a-f]{32}$/i;
+  const dashedUUIDRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return usernameRegex.test(input) || UUIDRegex.test(input) || dashedUUIDRegex.test(input);
+}
+
+function buttonState(state) {
+  button.textContent = state ? 'Get Skin' : 'Loading...';
+  button.disabled = !state;
+}
+
+async function fetchProfile(identifier) {
+  const response = await fetch(`https://crafthead.net/profile/${identifier}`);
+  if (!response.ok) throw new Error("Error while getting player data.");
+
+  const data = await response.json();
+
+  if (data.error === "User does not exist") {
+    alert("User does not exist. Please check the username or UUID and try again.");
+    throw new Error("User does not exist.");
+  }
+
+  return data;
+}
+
+async function execute(identifier) {
   if (button.disabled) return;
-  btnState(false);
-
-  if (username === "" || username == null) {
-    alert("Please, insert a username!");
-    btnState(true);
-    return;
-  }
-  if (!(/^\w{3,16}$/).test(username)) {
-    alert("Please, insert a valid username!");
-    btnState(true);
+  if (!isValidUsernameOrUUID(identifier)) {
+    alert("Please, insert a valid username or UUID!");
     return;
   }
 
+  buttonState(false);
   skinImg.style.display = 'none';
   capeImg.style.display = 'none';
-  skinImg.src = "";
-  capeImg.src = "";
+  skinImg.src = '';
+  capeImg.src = '';
 
   try {
-    const response = await fetch(`https://api.ashcon.app/mojang/v2/user/${username}`);
-    if (!response.ok) throw new Error("Error while getting the player's data.");
+    const profile = await fetchProfile(identifier);
+    const textureProperty = profile.properties.find(p => p.name === 'textures');
+    if (!textureProperty) throw new Error("Error while getting skin data.");
 
-    const data = await response.json();
-    if (!data.textures) throw new Error("Error while getting player data.");
+    const decodedTextures = JSON.parse(atob(textureProperty.value));
 
-    skinImg.src = `data:image/png;base64,${data.textures.skin.data}`;
-    skinImg.style.display = 'block';
-    if (data.textures.cape.data != null) {
-      capeImg.src = `data:image/png;base64,${data.textures.cape.data}`;
+    const skinUrl = decodedTextures.textures.SKIN?.url;
+    const capeUrl = decodedTextures.textures.CAPE?.url;
+
+    if (skinUrl) {
+      skinImg.src = skinUrl;
+      skinImg.style.display = 'block';
+    } else {
+      throw new Error("Skin not found.");
+    }
+
+    if (capeUrl) {
+      capeImg.src = capeUrl;
       capeImg.style.display = 'block';
     }
-  } catch (error) {console.error(error.message);}
-  btnState(true);
-}
 
-function btnState(state) {
-  if (state === false) {
-    button.textContent = 'Loading...';
-    button.disabled = true;
-    return;
+  } catch (e) {
+    console.error(e.message);
+  } finally {
+    buttonState(true);
   }
-  button.disabled = false;
-  button.textContent = 'Get Skin';
-};
-
-function dl(type) {
-  var a = document.createElement("a");
-  if (type === "Skin") a.href = skinImg.src;
-  if (type === "Cape") a.href = capeImg.src;
-  a.download = `${type}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
 }
 
-document.addEventListener("keydown", function(e) {
-  if (e.key === "Enter") getSkin(document.getElementById('username').value.trim());
-});
+setTimeout(() => {
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      execute(usernameInput.value.trim());
+    };
+  });
+}, 300);
