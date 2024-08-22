@@ -64,7 +64,7 @@ async function displayImg(url, element) {
   return blob;
 }
 
-function downloadImage(type) {
+function dl(type) {
   const blob = type === "skin" ? skinBlob : capeBlob;
   if (blob) {
     const a = document.createElement('a');
@@ -77,8 +77,6 @@ function downloadImage(type) {
 }
 
 setTimeout(() => {
-  skinImg.addEventListener('click', () => downloadImage("skin"));
-  capeImg.addEventListener('click', () => downloadImage("cape"));
   document.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
       e.preventDefault();
