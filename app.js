@@ -16,6 +16,18 @@ function buttonState(state) {
   button.disabled = !state;
 }
 
+function dl(type) {
+  const img = type === "Skin" ? skinImg : capeImg;
+  if (img.src) {
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = `${type}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}
+
 async function fetchProfile(identifier) {
   const response = await fetch(`https://crafthead.net/profile/${identifier}`);
   if (!response.ok) throw new Error("Error while getting player data.");
@@ -78,5 +90,15 @@ setTimeout(() => {
       e.preventDefault();
       execute(usernameInput.value.trim());
     };
+  });
+
+  skinImg.addEventListener("click", function(e) {
+    e.preventDefault();
+    dl("Skin");
+  });
+
+  capeImg.addEventListener("click", function(e) {
+    e.preventDefault();
+    dl("Cape");
   });
 }, 300);
