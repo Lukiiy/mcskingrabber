@@ -2,30 +2,14 @@ const capeImg = document.getElementById('cape');
 const skinImg = document.getElementById('skin');
 const button = document.getElementById('btn');
 const usernameInput = document.getElementById('username');
-const dataBox = document.getElementById('data');
 
-function isValidUsernameOrUUID(input) {
-  const usernameRegex = /^\w{3,16}$/;
-  const UUIDRegex = /^[0-9a-f]{32}$/i;
-  const dashedUUIDRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return usernameRegex.test(input) || UUIDRegex.test(input) || dashedUUIDRegex.test(input);
-}
+let textureData = null;
+let skinBlob = null;
+let capeBlob = null;
 
 function buttonState(state) {
   button.textContent = state ? 'Get Skin' : 'Loading...';
   button.disabled = !state;
-}
-
-function dl(type) {
-  const img = type === "Skin" ? skinImg : capeImg;
-  if (img.src) {
-    const a = document.createElement('a');
-    a.href = img.src;
-    a.download = `${type}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
 }
 
 async function fetchProfile(identifier) {
@@ -33,7 +17,6 @@ async function fetchProfile(identifier) {
   if (!response.ok) throw new Error("Error while getting player data.");
 
   const data = await response.json();
-
   if (data.error === "User does not exist") {
     alert("User does not exist. Please check the username or UUID and try again.");
     throw new Error("User does not exist.");
@@ -44,38 +27,27 @@ async function fetchProfile(identifier) {
 
 async function execute(identifier) {
   if (button.disabled) return;
-  if (!isValidUsernameOrUUID(identifier)) {
-    alert("Please, insert a valid username or UUID!");
-    return;
-  }
 
   buttonState(false);
   skinImg.style.display = 'none';
   capeImg.style.display = 'none';
   skinImg.src = '';
   capeImg.src = '';
+  textureData = null;
+  skinBlob = null;
+  capeBlob = null;
 
   try {
     const profile = await fetchProfile(identifier);
-    const textureProperty = profile.properties.find(p => p.name === 'textures');
-    if (!textureProperty) throw new Error("Error while getting skin data.");
+    const properties = profile.properties.find(p => p.name === 'textures');
+    if (!properties) throw new Error("Error while getting skin data.");
 
-    const decodedTextures = JSON.parse(atob(textureProperty.value));
+    usernameInput.value = profile.name;
+    const decoded = JSON.parse(atob(properties.value));
+    textureData = decoded.textures;
 
-    const skinUrl = decodedTextures.textures.SKIN?.url;
-    const capeUrl = decodedTextures.textures.CAPE?.url;
-
-    if (skinUrl) {
-      skinImg.src = skinUrl;
-      skinImg.style.display = 'block';
-    } else {
-      throw new Error("Skin not found.");
-    }
-
-    if (capeUrl) {
-      capeImg.src = capeUrl;
-      capeImg.style.display = 'block';
-    }
+    if (textureData.SKIN?.url) skinBlob = await displayImg(textureData.SKIN.url, skinImg);
+    if (textureData.CAPE?.url) capeBlob = await displayImg(textureData.CAPE.url, capeImg);
 
   } catch (e) {
     console.error(e.message);
@@ -84,21 +56,33 @@ async function execute(identifier) {
   }
 }
 
+async function displayImg(url, element) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  element.src = URL.createObjectURL(blob);
+  element.style.display = 'block';
+  return blob;
+}
+
+function downloadImage(type) {
+  const blob = type === "skin" ? skinBlob : capeBlob;
+  if (blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${usernameInput.value}'s ${type}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}
+
 setTimeout(() => {
+  skinImg.addEventListener('click', () => downloadImage("skin"));
+  capeImg.addEventListener('click', () => downloadImage("cape"));
   document.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
       e.preventDefault();
       execute(usernameInput.value.trim());
     };
-  });
-
-  skinImg.addEventListener("click", function(e) {
-    e.preventDefault();
-    dl("Skin");
-  });
-
-  capeImg.addEventListener("click", function(e) {
-    e.preventDefault();
-    dl("Cape");
   });
 }, 300);
