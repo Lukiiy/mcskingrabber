@@ -59,21 +59,24 @@ async function execute(identifier) {
 async function displayImg(url, element) {
   const response = await fetch(url);
   const blob = await response.blob();
+
   element.src = URL.createObjectURL(blob);
   element.style.display = 'block';
+
   return blob;
 }
 
 function dl(type) {
   const blob = type === "skin" ? skinBlob : capeBlob;
-  if (blob) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${usernameInput.value}'s ${type}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
+  if (!blob) return;
+
+  const a = document.createElement('a');
+
+  a.href = URL.createObjectURL(blob);
+  a.download = `${usernameInput.value}'s ${type}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 setTimeout(() => {
