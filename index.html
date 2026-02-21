@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <meta name="description" content="A very lightweight tool for grabbing skins from Minecraft: Java Edition accounts.">
-  <meta name="author" content="Lukiiy">
-  <title>Minecraft Skin Grabber</title>
-  <script defer src="app.js"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="A very lightweight tool for grabbing skins from Minecraft: Java Edition accounts.">
+    <meta name="author" content="Lukiiy">
+    <title>Minecraft Skin Grabber</title>
+    <script defer src="app.js"></script>
 </head>
 <body>
-  <h1>Skin Grabber</h1>
+    <h1>Skin Grabber</h1>
 
-  <section>
-    <label for="username">Player:</label>
-    <input type="text" id="username" name="player" placeholder="jeb_">
-    <button id="btn" onclick="execute(usernameInput.value.trim())">Get Skin</button>
-  </section>
+    <section>
+        <label for="username">Player:</label>
+        <input type="text" id="username" name="player" placeholder="jeb_">
+        <button id="btn" onclick="execute(usernameInput.value.trim())">Get</button>
+    </section>
 
-  <img id="skin" alt="Skin" onclick="dl('skin')"></img>
-  <img id="cape" alt="Cape" onclick="dl('cape')"></img>
+    <img id="skin" alt="Skin" onclick="dl('skin')"></img>
+    <img id="cape" alt="Cape" onclick="dl('cape')"></img>
 
-  <a href="https://github.com/Lukiiy/mcskingrabber">Source Code</a>
+    <a href="https://github.com/Lukiiy/mcskingrabber">Source Code</a>
 </body>
 </html>

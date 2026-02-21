@@ -1,89 +1,113 @@
-const capeImg = document.getElementById('cape');
-const skinImg = document.getElementById('skin');
-const button = document.getElementById('btn');
-const usernameInput = document.getElementById('username');
+const capeImg = document.getElementById("cape");
+const skinImg = document.getElementById("skin");
+const button = document.getElementById("btn");
+const usernameInput = document.getElementById("username");
+const buttonOg = button.textContent;
 
-let textureData = null;
 let skinBlob = null;
 let capeBlob = null;
 
 function buttonState(state) {
-  button.textContent = state ? 'Get Skin' : 'Loading...';
-  button.disabled = !state;
+    button.textContent = state ? buttonOg : "Loading...";
+    button.disabled = !state;
 }
 
-async function fetchProfile(identifier) {
-  const response = await fetch(`https://crafthead.net/profile/${identifier}`);
-  if (!response.ok) throw new Error("Error while getting player data.");
+async function fetchProfile(id) {
+    const response = await fetch(`https://crafthead.net/profile/${id}`);
+    if (!response.ok) throw new Error("Error while getting player data.");
 
-  const data = await response.json();
-  if (data.error === "User does not exist") {
-    alert("User does not exist. Please check the username or UUID and try again.");
-    throw new Error("User does not exist.");
-  }
+    const data = await response.json();
+    if (data.error === "User does not exist") {
+        alert("User does not exist. Please check the username or UUID and try again.");
 
-  return data;
+        throw new Error("User does not exist.");
+    }
+
+    return data;
 }
 
-async function execute(identifier) {
-  if (button.disabled) return;
+async function execute(id) {
+    if (button.disabled) return;
 
-  buttonState(false);
-  skinImg.style.display = 'none';
-  capeImg.style.display = 'none';
-  skinImg.src = '';
-  capeImg.src = '';
-  textureData = null;
-  skinBlob = null;
-  capeBlob = null;
+    buttonState(false);
 
-  try {
-    const profile = await fetchProfile(identifier);
-    const properties = profile.properties.find(p => p.name === 'textures');
-    if (!properties) throw new Error("Error while getting skin data.");
+    skinImg.src = "";
+    capeImg.src = "";
+    skinBlob = null;
+    capeBlob = null;
 
-    usernameInput.value = profile.name;
-    const decoded = JSON.parse(atob(properties.value));
-    textureData = decoded.textures;
+    try {
+        const profile = await fetchProfile(id);
+        const properties = profile.properties?.find(p => p.name === "textures");
 
-    if (textureData.SKIN?.url) skinBlob = await displayImg(textureData.SKIN.url, skinImg);
-    if (textureData.CAPE?.url) capeBlob = await displayImg(textureData.CAPE.url, capeImg);
+        usernameInput.value = profile.username ?? profile.name ?? id;
 
-  } catch (e) {
-    console.error(e.message);
-  } finally {
-    buttonState(true);
-  }
+        let skinUrl = null;
+        let capeUrl = null;
+
+        if (properties?.value) {
+            try {
+                const decoded = JSON.parse(atob(properties.value)).textures;
+
+                skinUrl = decoded?.SKIN?.url ?? null;
+                capeUrl = decoded?.CAPE?.url ?? null;
+            } catch (err) {
+                console.warn("Failed to decode textures property.", err);
+            }
+        }
+
+        if (!skinUrl) skinUrl = profile.skin_texture ?? null;
+        if (!capeUrl) capeUrl = profile.cape_texture ?? null;
+        if (!skinUrl && !capeUrl) throw new Error("Error while getting skin data.");
+
+        if (skinUrl) skinBlob = await displayImg(skinUrl, skinImg);
+        if (capeUrl) capeBlob = await displayImg(capeUrl, capeImg);
+
+        setFavicon(`https://crafthead.net/helm/${profile.id}`);
+    } catch (e) {
+        console.error(e?.message ?? e);
+    } finally {
+        buttonState(true);
+    }
 }
 
 async function displayImg(url, element) {
-  const response = await fetch(url);
-  const blob = await response.blob();
+    const response = await fetch(url.replace(/^http:\/\//i, "https://"));
+    const blob = await response.blob();
 
-  element.src = URL.createObjectURL(blob);
-  element.style.display = 'block';
+    element.src = URL.createObjectURL(blob);
 
-  return blob;
+    return blob;
 }
 
 function dl(type) {
-  const blob = type === "skin" ? skinBlob : capeBlob;
-  if (!blob) return;
+    const blob = type === "skin" ? skinBlob : capeBlob;
+    if (!blob) return;
 
-  const a = document.createElement('a');
+    const a = document.createElement("a");
 
-  a.href = URL.createObjectURL(blob);
-  a.download = `${usernameInput.value}'s ${type}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    a.href = URL.createObjectURL(blob);
+    a.download = `${usernameInput.value}'s ${type}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
-setTimeout(() => {
-  document.addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      execute(usernameInput.value.trim());
+function setFavicon(url) {
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+
+        document.head.appendChild(link);
+    }
+
+    link.href = url;
+}
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && document.activeElement === usernameInput) {
+        e.preventDefault();
+        execute(usernameInput.value.trim());
     };
-  });
-}, 300);
+});
